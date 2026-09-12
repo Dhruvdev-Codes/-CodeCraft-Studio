@@ -6,7 +6,7 @@ import { User } from "@/lib/models/User";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password } = body;
+    const { name, email, password, role } = body;
 
     if (!name || !email || !password) {
       return NextResponse.json({ error: "Name, email, and password are required." }, { status: 400 });
@@ -30,11 +30,12 @@ export async function POST(request: NextRequest) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const userRole = role === "developer" ? "developer" : "student";
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       passwordHash,
-      role: "student",
+      role: userRole,
       provider: "credentials",
     });
 
