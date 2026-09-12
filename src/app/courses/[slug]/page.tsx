@@ -13,8 +13,13 @@ interface Props {
 }
 
 export default async function CourseDetailPage({ params }: Props) {
-  await connectDb();
-  const course = await Course.findOne({ slug: params.slug }).lean();
+  let course: any = null;
+  try {
+    await connectDb();
+    course = await Course.findOne({ slug: params.slug }).lean();
+  } catch (err) {
+    console.error("[CourseDetailPage] Database load error:", err);
+  }
 
   if (!course) {
     notFound();
@@ -80,7 +85,7 @@ export default async function CourseDetailPage({ params }: Props) {
           <h2 className="text-xl font-bold">Curriculum · {lessons.length} Lessons</h2>
 
           <div className="space-y-3">
-            {lessons.map((lesson, idx) => (
+            {lessons.map((lesson: any, idx: number) => (
               <Card
                 key={lesson.slug}
                 className="p-5 flex items-center justify-between gap-4 hover:border-brand-500/40 transition-colors"

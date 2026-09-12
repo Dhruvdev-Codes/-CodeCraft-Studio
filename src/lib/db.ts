@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
 const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/codecraft-studio";
+  process.env.MONGODB_URI || (process.env.NODE_ENV === "production" ? "" : "mongodb://localhost:27017/codecraft-studio");
 
-// Use a global cache so hot-reloading in dev does not create endless
-// connection pools to MongoDB Atlas.
+// Use a global cache so hot-reloading in dev or serverless re-invocation
+// does not create duplicate connection pools to MongoDB.
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
@@ -15,13 +15,13 @@ declare global {
   var mongooseCache: MongooseCache | undefined;
 }
 
-if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
-  );
-}
-
 export async function connectDb(): Promise<typeof mongoose> {
+  if (!MONGODB_URI) {
+    throw new Error(
+      "MONGODB_URI environment variable is not defined. Please add it to your environment variables."
+    );
+  }
+
   if (globalThis.mongooseCache?.conn) {
     return globalThis.mongooseCache.conn;
   }
@@ -36,7 +36,8 @@ export async function connectDb(): Promise<typeof mongoose> {
   if (!globalThis.mongooseCache.promise) {
     globalThis.mongooseCache.promise = mongoose.connect(MONGODB_URI, {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
     });
   }
 

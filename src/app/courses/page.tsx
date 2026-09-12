@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, Layers, ArrowRight } from "lucide-react";
+import { BookOpen, Layers, ArrowRight, Sparkles } from "lucide-react";
 import { connectDb } from "@/lib/db";
 import { Course } from "@/lib/models/Course";
 import { Navbar } from "@/components/Navbar";
@@ -10,8 +10,13 @@ import { Button, Card, StatusBadge } from "@/components/ui";
 export const dynamic = "force-dynamic";
 
 export default async function CoursesPage() {
-  await connectDb();
-  const courses = await Course.find({}).sort({ order: 1 }).lean();
+  let courses: any[] = [];
+  try {
+    await connectDb();
+    courses = await Course.find({}).sort({ order: 1 }).lean();
+  } catch (err) {
+    console.error("[CoursesPage] Database load error:", err);
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-ink-900 text-slate-900 dark:text-slate-100">
@@ -31,63 +36,83 @@ export default async function CoursesPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => {
-            const lessonCount = course.lessons?.length || 0;
-            const firstLessonSlug = course.lessons?.[0]?.slug;
+        {courses.length === 0 ? (
+          <Card className="p-12 text-center max-w-lg mx-auto">
+            <BookOpen className="h-12 w-12 mx-auto text-brand-500 mb-4 opacity-70" />
+            <h3 className="text-lg font-bold">No Courses Available Yet</h3>
+            <p className="text-sm text-slate-500 mt-2">
+              The database has not been seeded with course data yet. As an administrator, you can seed initial curriculum data.
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Link href="/admin">
+                <Button className="gap-2">
+                  <Sparkles className="h-4 w-4" /> Seed Initial Data
+                </Button>
+              </Link>
+              <Link href="/ide">
+                <Button variant="outline">Open Cloud IDE</Button>
+              </Link>
+            </div>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {courses.map((course) => {
+              const lessonCount = course.lessons?.length || 0;
+              const firstLessonSlug = course.lessons?.[0]?.slug;
 
-            return (
-              <Card key={course._id.toString()} className="flex flex-col overflow-hidden hover:border-brand-500/40 transition-colors">
-                <div className="p-6 flex-1 flex flex-col">
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="text-4xl select-none">{course.icon || "💻"}</span>
-                    <StatusBadge
-                      status={
-                        course.difficulty === "Beginner"
-                          ? "easy"
-                          : course.difficulty === "Intermediate"
-                          ? "medium"
-                          : "hard"
-                      }
-                    >
-                      {course.difficulty}
-                    </StatusBadge>
+              return (
+                <Card key={course._id.toString()} className="flex flex-col overflow-hidden hover:border-brand-500/40 transition-colors">
+                  <div className="p-6 flex-1 flex flex-col">
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="text-4xl select-none">{course.icon || "💻"}</span>
+                      <StatusBadge
+                        status={
+                          course.difficulty === "Beginner"
+                            ? "easy"
+                            : course.difficulty === "Intermediate"
+                            ? "medium"
+                            : "hard"
+                        }
+                      >
+                        {course.difficulty}
+                      </StatusBadge>
+                    </div>
+
+                    <h2 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">
+                      {course.title}
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-3 flex-1">
+                      {course.description}
+                    </p>
+
+                    <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1.5 font-medium uppercase tracking-wider">
+                        <Layers className="h-4 w-4 text-brand-500" />
+                        {course.language}
+                      </span>
+                      <span>{lessonCount} {lessonCount === 1 ? "Lesson" : "Lessons"}</span>
+                    </div>
                   </div>
 
-                  <h2 className="mt-4 text-xl font-bold text-slate-900 dark:text-white">
-                    {course.title}
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 line-clamp-3 flex-1">
-                    {course.description}
-                  </p>
-
-                  <div className="mt-6 flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500">
-                    <span className="inline-flex items-center gap-1.5 font-medium uppercase tracking-wider">
-                      <Layers className="h-4 w-4 text-brand-500" />
-                      {course.language}
-                    </span>
-                    <span>{lessonCount} {lessonCount === 1 ? "Lesson" : "Lessons"}</span>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50 dark:bg-ink-800/60 p-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
-                  <Link href={`/courses/${course.slug}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full">
-                      Curriculum
-                    </Button>
-                  </Link>
-                  {firstLessonSlug && (
-                    <Link href={`/courses/${course.slug}/${firstLessonSlug}`} className="flex-1">
-                      <Button size="sm" className="w-full">
-                        Start <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                  <div className="bg-slate-50 dark:bg-ink-800/60 p-4 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+                    <Link href={`/courses/${course.slug}`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        Curriculum
                       </Button>
                     </Link>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                    {firstLessonSlug && (
+                      <Link href={`/courses/${course.slug}/${firstLessonSlug}`} className="flex-1">
+                        <Button size="sm" className="w-full">
+                          Start <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       <Footer />

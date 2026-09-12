@@ -75,14 +75,26 @@ export default function AdminPage() {
           </p>
         </div>
 
+        {/* Database Seeding Card */}
         <Card className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="space-y-1">
               <h2 className="text-lg font-bold flex items-center gap-2">
                 <Database className="h-5 w-5 text-brand-500" /> Database Seeding
               </h2>
-              <p className="text-xs text-slate-500">Resets or populates sample courses, problems, and contests.</p>
+              <p className="text-xs text-slate-500">Populate or refresh initial curriculum courses, problems, and contests.</p>
             </div>
+            <Button onClick={handleSeed} loading={seeding} variant="outline" size="sm">
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Run Seeder
+            </Button>
+          </div>
+          {seedResult && (
+            <div className="p-3 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-xs font-medium text-brand-600 dark:text-brand-300">
+              {seedResult}
+            </div>
+          )}
+        </Card>
+
         {/* Quick Add Problem */}
         <Card className="p-6 space-y-4">
           <h2 className="text-lg font-bold flex items-center gap-2">
@@ -179,16 +191,6 @@ export default function AdminPage() {
 
             <Button type="submit" loading={creating}>Create Problem</Button>
           </form>
-        </Card>
-            <Button onClick={handleSeed} loading={seeding} variant="outline" size="sm">
-              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Run Seeder
-            </Button>
-          </div>
-          {seedResult && (
-            <div className="p-3 rounded-lg bg-brand-50 dark:bg-brand-500/10 text-xs font-medium text-brand-600 dark:text-brand-300">
-              {seedResult}
-            </div>
-          )}
         </Card>
       </main>
       <Footer />
